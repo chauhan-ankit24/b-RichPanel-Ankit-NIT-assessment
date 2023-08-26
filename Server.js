@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
 const cors = require('cors')
-const port = 3000;
+const port = 3000;  
 
 
 require('dotenv').config(); 
@@ -10,7 +10,7 @@ require('dotenv').config();
 app.use(express.json());
 app.use(cors())
 
-mongoose.connect(process.env.MONGODB_URI_DEV, {
+mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     dbName: 'Dummydb', 
