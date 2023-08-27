@@ -1,11 +1,11 @@
-const  User  = require("../Models/user");
+const User = require("../Models/user");
 const { isEmail } = require("validator");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const TOKEN_KEY = process.env.TOKEN_KEY;
-const stripe = require('stripe')('sk_test_51Nj5vhSDdCrLIyYKPqI56qiNBOXQHOlnq7aQG7pU8b6LLz3fvxd7h6MB2F26taE1ifaUsv3DEWQCnTRATWzuiwW300k0hwKldq'); 
+const stripe = require('stripe')('sk_test_51Nj5vhSDdCrLIyYKPqI56qiNBOXQHOlnq7aQG7pU8b6LLz3fvxd7h6MB2F26taE1ifaUsv3DEWQCnTRATWzuiwW300k0hwKldq');
 
-const LOGIN = async (req, res) => {
+const login = async (req, res) => {
   try {
     const { password, email } = req.body;
     if (!password && !email) {
@@ -33,7 +33,7 @@ const LOGIN = async (req, res) => {
   }
 };
 
-const REGISTER = async (req, res) => {
+const register = async (req, res) => {
   try {
     const { name, password, email } = req.body;
     console.log(name, password, email);
@@ -47,7 +47,7 @@ const REGISTER = async (req, res) => {
       return res.send({ msg: "user already exist", status: 400 });
     }
     // encrypting the password
-    const encryptedPassword = await bcrypt.hash(password, 10);
+    const encryptedPassword = await bcrypt.hash(password, 11);
     // creating a new user
     const newuser = await User.create({
       name,
@@ -58,7 +58,7 @@ const REGISTER = async (req, res) => {
     const token = jwt.sign(
       { user_id: newuser._id, email },
       TOKEN_KEY,
-      { expiresIn: "15d" }
+      { expiresIn: "10d" }
     );
     newuser.token = token;
     await newuser.save();
@@ -67,37 +67,9 @@ const REGISTER = async (req, res) => {
     res.send({ msg: "internal server error", status: 500, error });
   }
 };
-const session = async (req, res) => {
-  try {
-      const { token } = req.body;
-      const session = await stripe.checkout.sessions.create({
-          payment_method_types: ['card'],
-          line_items: [
-              {
-                  price_data: {
-                      currency: 'usd',
-                      product_data: {
-                          name: 'Your Product Name',
-                      },
-                      unit_amount: 1000, // Amount in cents
-                  },
-                  quantity: 1,
-              },
-          ],
-          mode: 'payment',
-          success_url: 'http://localhost:3000/success', // Replace with your success URL
-          cancel_url: 'http://localhost:3000/cancel', // Replace with your cancel URL
-          payment_method_types: ['card'],
-         
-      });
-      res.status(200).json({message: 'success'})
-    } catch (error) {
-    console.log(error);
-      res.status(500).json({ error: error.message });
-  }
-};
 
-const UpdateUser = async (req, res) => {
+
+const userUpdate = async (req, res) => {
   try {
     const { email, ...updatedUser } = req.body;
 
@@ -118,4 +90,36 @@ const UpdateUser = async (req, res) => {
 };
 
 
-module.exports = {LOGIN,REGISTER,session,UpdateUser}
+const sessionPaymnet = async (req, res) => {
+  try {
+    const { token } = req.body;
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Your Product Name',
+            },
+            unit_amount: 1000,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: 'http://localhost:3000/success',
+      cancel_url: 'http://localhost:3000/cancel',
+      payment_method_types: ['card'],
+
+    });
+    res.status(200).json({ message: 'success' })
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
+module.exports = { login, register, userUpdate, sessionPaymnet }
